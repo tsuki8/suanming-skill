@@ -64,6 +64,7 @@ iztro 的时辰索引为：早子 0、丑 1、寅 2、卯 3、辰 4、巳 5、�
 
 Markdown 输出用于直接阅读；`--format json` 输出完整、可机器处理的数据：
 
+- `schemaVersion`：当前为 `1.0`，调用方用它判断结构兼容性；
 - `chart`：本命盘、十二宫和本命星曜；
 - `decadals`：全部大限；
 - `target`：传入 `--target-date` 后的目标日期大限、流年、流月、流日和流时；
@@ -128,9 +129,11 @@ python3 scripts/ziwei_auto.py --solar 2000-08-16 --shichen 寅 --sex 女 --outpu
 Python 脚本不计算命宫、星曜、四化或运限，而是调用 `ziwei_pan.mjs` 或 `ziwei_time_compare.mjs` 获取确定性 JSON。已知时辰时，它自动生成：
 
 - 基本盘、命身宫、命身主和五行局；
+- 顶层完整 `bodyPalace`，以及事业、健康、整体主题中的身宫完整宫位事实；
 - 生年禄权科忌落星落宫；
 - 文昌、文曲、红鸾、天喜的位置和状态；
 - 事业、财运、身体/心理、感情、整体、学业六个主题的必看宫位事实包；
 - 全部大限及可选目标日期的大限、流年四化。
 
 测试入口为 `python3 -m unittest scripts/test_ziwei_auto.py`；项目统一运行 `npm test` 会同时执行 Node 与 Python 测试。
+Node 测试矩阵逐项执行通行版/中州派、天盘/地盘/人盘、换年分界、运限分界、虚岁分界、晚子归日和闰月调整配置，并检查目标日期的流年、流月、流日和流时字段。

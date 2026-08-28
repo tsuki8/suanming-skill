@@ -49,6 +49,15 @@ class ZiweiAutoTest(unittest.TestCase):
             "study",
         })
         self.assertEqual(data["topics"]["career"]["palaces"][0]["name"], "官禄")
+        self.assertTrue(data["bodyPalace"]["isBodyPalace"])
+        self.assertEqual(data["bodyPalace"]["earthlyBranch"], "戌")
+        for topic in ("career", "health", "overall"):
+            self.assertEqual(
+                data["topics"][topic]["bodyPalace"],
+                data["bodyPalace"],
+            )
+        for topic in ("wealth", "relationship", "study"):
+            self.assertIsNone(data["topics"][topic]["bodyPalace"])
         self.assertEqual(
             [row["name"] for row in data["focusStars"]],
             ["文昌", "文曲", "红鸾", "天喜"],
@@ -93,6 +102,7 @@ class ZiweiAutoTest(unittest.TestCase):
             text = output.read_text(encoding="utf-8")
             self.assertIn("# 紫微斗数自动计算事实包", text)
             self.assertIn("## 六大主题事实输入", text)
+            self.assertIn("身宫所在宫位", text)
 
     def test_rejects_leap_flag_with_solar_date(self) -> None:
         completed = run_script(

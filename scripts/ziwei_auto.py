@@ -28,31 +28,37 @@ TOPICS: dict[str, dict[str, Any]] = {
         "label": "事业",
         "palaces": ("官禄", "财帛", "命", "迁移", "交友", "福德"),
         "focus_stars": (),
+        "include_body_palace": True,
     },
     "wealth": {
         "label": "财运",
         "palaces": ("财帛", "官禄", "命", "迁移", "田宅", "福德"),
         "focus_stars": (),
+        "include_body_palace": False,
     },
     "health": {
         "label": "健康（身体／心理）",
         "palaces": ("疾厄", "福德", "命"),
         "focus_stars": (),
+        "include_body_palace": True,
     },
     "relationship": {
         "label": "感情",
         "palaces": ("夫妻", "福德", "迁移", "命", "官禄", "交友", "田宅"),
         "focus_stars": ("红鸾", "天喜"),
+        "include_body_palace": False,
     },
     "overall": {
         "label": "整体",
         "palaces": ("命", "迁移", "财帛", "官禄", "夫妻", "福德"),
         "focus_stars": FOCUS_STARS,
+        "include_body_palace": True,
     },
     "study": {
         "label": "学业",
         "palaces": ("命", "福德", "官禄", "迁移", "父母"),
         "focus_stars": ("文昌", "文曲"),
+        "include_body_palace": False,
     },
 }
 
@@ -236,7 +242,11 @@ def compact_target(target: dict[str, Any] | None) -> dict[str, Any] | None:
     }
 
 
-def topic_packets(chart: dict[str, Any], focus: list[dict[str, str]]) -> dict[str, Any]:
+def topic_packets(
+    chart: dict[str, Any],
+    focus: list[dict[str, str]],
+    body_palace: dict[str, Any],
+) -> dict[str, Any]:
     packets: dict[str, Any] = {}
     for key, topic in TOPICS.items():
         selected_focus = [
@@ -247,6 +257,11 @@ def topic_packets(chart: dict[str, Any], focus: list[dict[str, str]]) -> dict[st
             "palaces": [
                 compact_palace(palace_by_name(chart, name)) for name in topic["palaces"]
             ],
+            "bodyPalace": (
+                compact_palace(body_palace)
+                if topic["include_body_palace"]
+                else None
+            ),
             "focusStars": selected_focus,
         }
     return packets
@@ -275,9 +290,10 @@ def enrich_chart(raw: dict[str, Any]) -> dict[str, Any]:
             "body": chart["body"],
             "fiveElementsClass": chart["fiveElementsClass"],
         },
+        "bodyPalace": compact_palace(body_palace),
         "birthMutagens": birth_mutagens(chart),
         "focusStars": focus,
-        "topics": topic_packets(chart, focus),
+        "topics": topic_packets(chart, focus, body_palace),
         "decadals": raw["decadals"],
         "target": compact_target(raw["target"]),
         "warnings": raw["warnings"],
@@ -329,6 +345,8 @@ def render_chart_markdown(payload: dict[str, Any]) -> str:
         lines.append(f"### {topic['label']}")
         lines.append("")
         lines.append("- 宫位：" + "；".join(palace_text(item) for item in topic["palaces"]))
+        if topic["bodyPalace"]:
+            lines.append("- 身宫所在宫位：" + palace_text(topic["bodyPalace"]))
         if topic["focusStars"]:
             lines.append(
                 "- 重点星曜："

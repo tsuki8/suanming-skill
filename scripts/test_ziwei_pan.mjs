@@ -89,6 +89,9 @@ test("target date includes current decadal and yearly data", () => {
   assert.equal(`${data.target.decadal.heavenlyStem}${data.target.decadal.earthlyBranch}`, "庚辰");
   assert.equal(`${data.target.yearly.heavenlyStem}${data.target.yearly.earthlyBranch}`, "甲辰");
   assert.deepEqual(data.target.yearly.mutagen, ["廉贞", "破军", "武曲", "太阳"]);
+  assert.equal(data.target.monthly.name, "流月");
+  assert.equal(data.target.daily.name, "流日");
+  assert.equal(data.target.hourly.name, "流时");
 });
 
 test("explicit Zhongzhou configuration is preserved", () => {
@@ -107,6 +110,110 @@ test("explicit Zhongzhou configuration is preserved", () => {
   assert.equal(data.config.algorithm, "zhongzhou");
   assert.equal(data.config.astroType, "heaven");
 });
+
+const configurationCases = [
+  {
+    label: "all defaults",
+    birth: ["--solar", "2000-08-16", "--shichen", "寅", "--sex", "女"],
+    args: [],
+    expected: {
+      algorithm: "default",
+      astroType: "heaven",
+      yearDivide: "normal",
+      horoscopeDivide: "normal",
+      ageDivide: "normal",
+      dayDivide: "forward",
+      fixLeap: true,
+    },
+  },
+  {
+    label: "Zhongzhou heaven chart",
+    birth: ["--solar", "2000-08-16", "--shichen", "寅", "--sex", "女"],
+    args: ["--algorithm", "zhongzhou", "--astro-type", "heaven"],
+    expected: { algorithm: "zhongzhou", astroType: "heaven" },
+    expectedChart: { earthlyBranchOfSoulPalace: "午" },
+  },
+  {
+    label: "Zhongzhou earth chart",
+    birth: ["--solar", "2000-08-16", "--shichen", "寅", "--sex", "女"],
+    args: ["--algorithm", "zhongzhou", "--astro-type", "earth"],
+    expected: { algorithm: "zhongzhou", astroType: "earth" },
+    expectedChart: { earthlyBranchOfSoulPalace: "戌", fiveElementsClass: "土五局" },
+  },
+  {
+    label: "Zhongzhou human chart",
+    birth: ["--solar", "2000-08-16", "--shichen", "寅", "--sex", "女"],
+    args: ["--algorithm", "zhongzhou", "--astro-type", "human"],
+    expected: { algorithm: "zhongzhou", astroType: "human" },
+    expectedChart: { earthlyBranchOfSoulPalace: "申", fiveElementsClass: "水二局" },
+  },
+  {
+    label: "lunar-new-year boundary",
+    birth: ["--solar", "2000-02-04", "--shichen", "寅", "--sex", "女"],
+    args: ["--year-divide", "normal"],
+    expected: { yearDivide: "normal" },
+    expectedChart: { chineseDate: "己卯 丁丑 壬辰 壬寅", fiveElementsClass: "火六局" },
+  },
+  {
+    label: "Li Chun year boundary",
+    birth: ["--solar", "2000-02-04", "--shichen", "寅", "--sex", "女"],
+    args: ["--year-divide", "exact"],
+    expected: { yearDivide: "exact" },
+    expectedChart: { chineseDate: "庚辰 己丑 壬辰 壬寅", fiveElementsClass: "土五局" },
+  },
+  {
+    label: "solar-term horoscope boundary",
+    birth: ["--solar", "2000-08-16", "--shichen", "寅", "--sex", "女"],
+    args: ["--horoscope-divide", "exact"],
+    expected: { horoscopeDivide: "exact" },
+  },
+  {
+    label: "birthday age division",
+    birth: ["--solar", "2000-08-16", "--shichen", "寅", "--sex", "女", "--target-date", "2025-01-01"],
+    args: ["--age-divide", "birthday"],
+    expected: { ageDivide: "birthday" },
+  },
+  {
+    label: "late Zi remains on current day",
+    birth: ["--solar", "2000-08-16", "--shichen", "子", "--zi", "late", "--sex", "女"],
+    args: ["--day-divide", "current"],
+    expected: { dayDivide: "current" },
+    expectedChart: { chineseDate: "庚辰 甲申 丙午 戊子" },
+  },
+  {
+    label: "leap-month adjustment enabled",
+    birth: ["--lunar", "2001-04-20", "--leap", "--shichen", "寅", "--sex", "女"],
+    args: [],
+    expected: { fixLeap: true },
+    expectedChart: {
+      earthlyBranchOfSoulPalace: "辰",
+      earthlyBranchOfBodyPalace: "申",
+    },
+  },
+  {
+    label: "leap-month adjustment disabled",
+    birth: ["--lunar", "2001-04-20", "--leap", "--shichen", "寅", "--sex", "女"],
+    args: ["--no-fix-leap"],
+    expected: { fixLeap: false },
+    expectedChart: {
+      earthlyBranchOfSoulPalace: "卯",
+      earthlyBranchOfBodyPalace: "未",
+    },
+  },
+];
+
+for (const { label, birth, args, expected, expectedChart = {} } of configurationCases) {
+  test(`configuration: ${label}`, () => {
+    const data = runJson(...birth, ...args);
+    for (const [key, value] of Object.entries(expected)) {
+      assert.equal(data.config[key], value, `${key} should be ${value}`);
+    }
+    for (const [key, value] of Object.entries(expectedChart)) {
+      assert.equal(data.chart[key], value, `chart.${key} should be ${value}`);
+    }
+    assert.equal(data.chart.palaces.length, 12);
+  });
+}
 
 test("missing birth time fails clearly", () => {
   const result = spawnSync(process.execPath, [SCRIPT, "--solar", "2000-08-16", "--sex", "女"], {

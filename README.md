@@ -1,6 +1,7 @@
 # 紫微斗数排盘 Skill
 
-一个面向 Codex/AI Agent 的开源紫微斗数 Skill。项目使用固定版本的
+一个同时面向 Codex 和 Claude Code 的开源紫微斗数 Agent Skill。项目遵循
+[Agent Skills 开放格式](https://agentskills.io)，使用固定版本的
 [`iztro`](https://github.com/SylarLong/iztro) 完成确定性排盘，并提供命盘校验、流派口径对照、
 大限流年及专题解读的工作流程。
 
@@ -16,6 +17,9 @@
 - 支持通行版与中州派，以及天盘、地盘和人盘选项。
 - 输出十二宫、主辅杂曜、生年四化、大限与指定日期流年。
 - 支持 Markdown 和 JSON，方便人工阅读或程序继续处理。
+- Python 自动生成事业、财运、身心、感情、整体和学业六类事实包。
+- 出生时间未知时，可比较早子至晚子共 13 个候选时辰。
+- 同一份 `SKILL.md` 可供 Codex 和 Claude Code 使用，无需维护两套提示词。
 - 提供黄金用例和自动化测试，便于检查升级后的排盘一致性。
 - 不依赖外部算命 API，也不需要任何 API Key。
 
@@ -36,6 +40,7 @@
 ## 环境要求
 
 - Node.js 18 或更高版本
+- Python 3.10 或更高版本
 - npm
 
 ## 安装
@@ -46,7 +51,8 @@ cd ziweidoushu-skill
 npm install
 ```
 
-如需作为个人 Codex Skill 使用，可将仓库放入你的 Skills 目录，并确保依赖已经安装。
+只使用命令行排盘时，克隆到任意目录即可。作为 Agent Skill 使用时，请继续参阅下方的
+[Codex 与 Claude Code](#codex-与-claude-code) 安装说明。
 
 ## 快速开始
 
@@ -96,16 +102,137 @@ node scripts/ziwei_pan.mjs \
 node scripts/ziwei_pan.mjs --help
 ```
 
-## 在 Codex 中使用
+自动生成六大主题事实包：
 
-安装为 Skill 后，可以这样提出请求：
+```bash
+python3 scripts/ziwei_auto.py \
+  --solar 2000-08-16 \
+  --hour 03:30 \
+  --sex 女 \
+  --target-date 2025-01-01
+```
+
+省略出生时间时，自动切换为 13 个候选时辰比较：
+
+```bash
+python3 scripts/ziwei_auto.py \
+  --solar 2000-08-16 \
+  --sex 女
+```
+
+## Codex 与 Claude Code
+
+Codex 和 Claude Code 都能读取包含 `SKILL.md`、脚本和引用资料的 Agent Skill。本仓库使用共同的
+`SKILL.md` 作为唯一事实源；`agents/openai.yaml` 只补充 Codex 的界面元数据，不影响 Claude Code。
+
+### Codex
+
+个人 Skill 默认安装到 `~/.agents/skills/`：
+
+```bash
+git clone https://github.com/tsuki8/ziweidoushu-skill.git \
+  ~/.agents/skills/ziwei-skill
+npm install --prefix ~/.agents/skills/ziwei-skill
+```
+
+在 Codex CLI 或 IDE 扩展中输入 `$ziwei-skill` 显式调用，也可以直接描述排盘需求让 Codex 自动匹配。
+如果新增 Skill 后未出现，请重新启动 Codex。详细机制参见
+[Codex Skills 文档](https://learn.chatgpt.com/docs/build-skills)。
+
+### Claude Code
+
+个人 Skill 默认安装到 `~/.claude/skills/`：
+
+```bash
+git clone https://github.com/tsuki8/ziweidoushu-skill.git \
+  ~/.claude/skills/ziwei-skill
+npm install --prefix ~/.claude/skills/ziwei-skill
+```
+
+在 Claude Code 中输入 `/ziwei-skill` 显式调用，也可以直接描述排盘需求让 Claude 自动匹配。
+详细机制参见 [Claude Code Skills 文档](https://code.claude.com/docs/en/skills)。
+
+### 同时供两者使用
+
+希望只维护一份克隆时，可将仓库放在任意固定目录，再把该目录链接到两个 Skill 目录。以下是 macOS/Linux 示例：
+
+```bash
+mkdir -p ~/.agents/skills ~/.claude/skills
+ln -s /absolute/path/to/ziweidoushu-skill ~/.agents/skills/ziwei-skill
+ln -s /absolute/path/to/ziweidoushu-skill ~/.claude/skills/ziwei-skill
+```
+
+Windows 用户可以分别克隆，或使用目录联接。不要把同一目录复制后分别修改；否则两个 Agent 会逐渐使用不同规则。
+
+### 示例请求
+
+Codex：
 
 ```text
 使用 $ziwei-skill，按明确的算法口径为我排紫微斗数命盘。
 请先列出排盘参数和命盘事实，再进行传统文化层面的解释，并提醒我理性参考。
 ```
 
+Claude Code：
+
+```text
+/ziwei-skill 按明确的算法口径为我排紫微斗数命盘。
+请先列出排盘参数和命盘事实，再进行传统文化层面的解释，并提醒我理性参考。
+```
+
 Skill 会要求完整的日期、出生时辰和性别。出生城市主要用于接近时辰边界时核对真太阳时；不需要姓名等无关信息。
+
+## 账户登录与 API Key
+
+本仓库不读取 Codex 或 Claude Code 的账户凭据，也不直接调用 OpenAI 或 Anthropic API。账户/API Key
+只用于认证你选择的 Agent 客户端；排盘和测试始终在本地执行。
+
+Codex 支持 ChatGPT 账户登录和 OpenAI API Key：
+
+```bash
+# ChatGPT 账户
+codex login
+
+# 已在当前安全环境中设置 OPENAI_API_KEY 时
+printenv OPENAI_API_KEY | codex login --with-api-key
+```
+
+Claude Code 支持 Claude.ai 账户、Claude Console 和 Anthropic API Key：
+
+```bash
+# Claude.ai/Console 账户
+claude auth login
+
+# API Key 由当前 Shell、密钥管理器或 CI 注入
+claude
+```
+
+使用 Claude API Key 时设置 `ANTHROPIC_API_KEY`；它会优先于已有的订阅账户登录。认证细节参见
+[Codex Authentication](https://learn.chatgpt.com/docs/auth) 和
+[Claude Code Authentication](https://code.claude.com/docs/en/authentication)。不要把 API Key、认证缓存或真实个案数据提交到仓库。
+
+## JSON 与程序集成
+
+不使用任何 AI 账户，也可以把排盘脚本当作本地确定性 CLI 接口：
+
+```bash
+node scripts/ziwei_pan.mjs \
+  --solar 2000-08-16 \
+  --hour 03:30 \
+  --sex 女 \
+  --target-date 2025-01-01 \
+  --format json
+
+python3 scripts/ziwei_auto.py \
+  --solar 2000-08-16 \
+  --hour 03:30 \
+  --sex 女 \
+  --format json
+```
+
+Node 入口返回完整命盘、全部大限和目标日期的流年、流月、流日、流时；Python 入口返回适合 Agent
+继续处理的精简事实包。两者当前都输出 `schemaVersion: "1.0"`。新增字段按向后兼容方式加入，调用方仍应保留
+未知字段并检查 `schemaVersion`。
 
 ## 测试
 
@@ -113,13 +240,22 @@ Skill 会要求完整的日期、出生时辰和性别。出生城市主要用�
 npm test
 ```
 
-测试覆盖公历与农历等价排盘、早晚子时、指定日期运限、中州派配置和缺失时间报错等场景。
+测试覆盖黄金用例、公历与农历等价、早晚子时、目标日期全部运限、13 时辰比较、六大主题事实包，以及：
+
+- 通行版与中州派；
+- 天盘、地盘和人盘；
+- 正月/立春换年；
+- 农历月/节气运限分界；
+- 自然年/生日虚岁分界；
+- 晚子时归当日/次日；
+- 闰月调整开关。
 
 ## 隐私与安全
 
 - 项目不调用外部算命 API，排盘在本机完成。
 - 脚本不会主动上传或持久化出生资料。
-- 不要将真实个案、聊天记录、API Key 或其他敏感信息提交到公开仓库。
+- Agent 客户端的账户登录与 API Key 只负责模型访问，不会改变本地排盘算法。
+- 不要将真实个案、聊天记录、API Key、`auth.json`、`.credentials.json` 或其他敏感信息提交到公开仓库。
 - 命令行参数可能被终端历史记录保存；对隐私要求较高时，请同时留意本机的 Shell 历史设置。
 - 健康相关内容只能视为传统文化象征，不用于诊断疾病或预测寿命。
 
@@ -131,10 +267,15 @@ npm test
 ├── agents/openai.yaml           # Skill 展示信息
 ├── references/
 │   ├── calculation.md           # 排盘口径、算法和黄金用例
-│   └── interpretation.md        # 解读框架与专题规则
+│   ├── interpretation.md        # 解读框架与专题规则
+│   └── supplementary.md         # 补充体系、隐私与安全边界
 ├── scripts/
 │   ├── ziwei_pan.mjs            # 确定性排盘命令行工具
-│   └── test_ziwei_pan.mjs       # 自动化测试
+│   ├── ziwei_time_compare.mjs   # 13 时辰候选比较
+│   ├── ziwei_auto.py            # 六主题自动事实包
+│   ├── test_ziwei_pan.mjs       # Node 回归测试
+│   ├── test_skill_metadata.mjs  # Codex/Claude Code 兼容性测试
+│   └── test_ziwei_auto.py       # Python 自动化测试
 └── package.json
 ```
 
