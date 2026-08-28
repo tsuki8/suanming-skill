@@ -3,7 +3,7 @@ name: ziwei-skill
 description: >
   确定性紫微斗数排盘、校盘与传统文化分析。Use when the user asks for 紫微斗数、紫微排盘、紫微命盘、
   命宫、身宫、十二宫、十四主星、四化、三方四正、大限、流年、事业、财运、身心健康、感情、学业、
-  合盘、出生时辰反推或跨软件校盘。Supports solar/lunar dates, leap months, 13 birth-time candidates,
+  合盘、出生时辰反推、跨软件校盘、东方占卜、梅花易数、数字卦或时间卦。Supports solar/lunar dates, leap months, 13 birth-time candidates,
   common and Zhongzhou algorithms, Python automation, machine-readable output, and clearly separated optional
   cross-references to user-supplied Bazi, astrology, feng-shui, personality, face/palm, or divination material.
 ---
@@ -149,6 +149,7 @@ Python 事实包中的顶层 `bodyPalace` 是身宫所在宫位的完整事实�
 
 - 排盘参数、算法口径、黄金用例或跨软件差异：`references/calculation.md`
 - 宫位、主星、四化、运限及六大专题的解读矩阵：`references/interpretation.md`
+- 梅花易数的来源、起卦公式、体用规则与程序接口：`references/divination.md`
 - 八字、占星、风水、家庭命盘、面相手相、人格量表、占卜、找失物、隐私与伦理边界：`references/supplementary.md`
 
 ## 解读顺序
@@ -187,6 +188,30 @@ Python 事实包中的顶层 `bodyPalace` 是身宫所在宫位的完整事实�
 - 卧室位置或家庭布局只作用户自愿提供的环境线索，不声称它能导致疾病、财富或成绩。
 - 占卜只处理一个清晰问题，优先一个方法和用户提供的首次结果；不得反复起卦直到得到满意答案，也不得声称首次结果必然正确。
 - 找失物先给现实搜索清单；用户明确要求时，才把其首次梅花易数结果作为娱乐性补充，不保证方位或找回结果。
+
+### 确定性梅花易数
+
+用户明确请求梅花易数、东方占卜、数字卦或时间卦时，优先运行统一入口，不让语言模型口算卦象：
+
+```bash
+python3 scripts/eastern_divination.py \
+  --method meihua \
+  --question "未来一个月这个项目应优先验证什么？" \
+  --numbers 2 3 --moving 1 --first-cast
+
+python3 scripts/eastern_divination.py \
+  --method meihua \
+  --question "未来一个月项目推进需要先验证什么？" \
+  --datetime 2026-08-28T15:30+08:00 --first-cast --format json
+```
+
+只使用用户明确提供的首次数字或起卦时间，不读取系统当前时间、不替用户随机选数。数字输入的第一数为上卦、
+第二数为下卦；默认两数之和取动爻。时间起卦采用农历年支、月、日和十二时辰，完整口径见
+`references/divination.md`。输出中的卦象结构是脚本事实，卦义、体用和行动提示是传统解释与本项目现代释义，
+必须保留资料来源、反证问题和免责声明。
+
+程序要求 `--first-cast`，并会拒绝医疗、用药、自伤、犯罪、诉讼、投资、借贷、博彩和失踪人员搜救等
+高风险问题。不得绕过拦截、不得对同一问题换数重算，也不得把结果改写成吉凶分数、成功率或事件保证。
 
 ## 对照其他软件
 

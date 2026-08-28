@@ -1,12 +1,12 @@
-# 紫微斗数排盘 Skill
+# 紫微斗数排盘、解盘与东方占卜 Skill
 
-一个同时面向 Codex 和 Claude Code 的开源紫微斗数 Agent Skill。项目遵循
+一个同时面向 Codex 和 Claude Code 的开源传统文化 Agent Skill。项目遵循
 [Agent Skills 开放格式](https://agentskills.io)，使用固定版本的
 [`iztro`](https://github.com/SylarLong/iztro) 完成确定性排盘，并提供命盘校验、流派口径对照、
-大限流年及专题解读的工作流程。
+大限流年、专题解读及可复现梅花易数的工作流程。
 
 > [!IMPORTANT]
-> **请理性看待紫微斗数。** 紫微斗数属于传统文化与民俗研究范畴，尚无可靠科学证据证明它能准确预测个人命运。
+> **请理性看待传统术数。** 紫微斗数、梅花易数和《周易》占筮属于传统文化与民俗研究范畴，尚无可靠科学证据证明它们能准确预测个人命运或未来事件。
 > 本项目的输出只适合文化研究、娱乐和自我反思，不应替代现实调查、独立判断或专业意见。
 > 请勿依据命盘独自作出医疗、心理、法律、投资、婚姻、升学或职业等重大决定。
 
@@ -19,6 +19,7 @@
 - 支持 Markdown 和 JSON，方便人工阅读或程序继续处理。
 - Python 自动生成事业、财运、身心、感情、整体和学业六类事实包。
 - 提供确定性规则解盘 CLI，支持事业、财帛、姻缘及双方姻缘合盘。
+- 提供东方占卜 CLI，首个方法为梅花易数，支持数字起卦与显式时间起卦。
 - 出生时间未知时，可比较早子至晚子共 13 个候选时辰。
 - 同一份 `SKILL.md` 可供 Codex 和 Claude Code 使用，无需维护两套提示词。
 - 提供黄金用例和自动化测试，便于检查升级后的排盘一致性。
@@ -164,6 +165,35 @@ python3 scripts/ziwei_interpret.py \
 程序比较双方单盘关系结构、需求与表达方式、生年四化跨盘映射和宫位地支辅助信号，不生成匹配分数，
 也不判断“唯一正缘”或保证婚期。
 
+### 东方占卜：梅花易数
+
+`eastern_divination.py` 用固定规则生成本卦、互卦、变卦、动爻和体用关系。它不读取当前时间、不随机抽取，
+相同输入始终得到相同结果。数字起卦时，第一数为上卦、第二数为下卦；省略 `--moving` 时用两数之和取动爻：
+
+```bash
+python3 scripts/eastern_divination.py \
+  --method meihua \
+  --question "未来一个月这个项目应优先验证什么？" \
+  --numbers 2 3 \
+  --moving 1 \
+  --first-cast
+```
+
+时间起卦必须显式提供当地民用时间。程序用锁定的 `iztro@2.6.0` 转换农历年月日，并在输出中保留历法中间值：
+
+```bash
+python3 scripts/eastern_divination.py \
+  --method meihua \
+  --question "未来一个月项目推进需要先验证什么？" \
+  --datetime 2026-08-28T15:30+08:00 \
+  --first-cast \
+  --format json
+```
+
+`--first-cast` 用于确认没有对同一问题反复起卦。程序会拒绝医疗、用药、自伤、犯罪、诉讼、投资、借贷、
+博彩和失踪人员搜救等高风险问题。完整计算约定、古籍依据和解释边界见
+[`references/divination.md`](references/divination.md)。
+
 ## Codex 与 Claude Code
 
 Codex 和 Claude Code 都能读取包含 `SKILL.md`、脚本和引用资料的 Agent Skill。本仓库使用共同的
@@ -272,6 +302,12 @@ python3 scripts/ziwei_auto.py \
   --hour 03:30 \
   --sex 女 \
   --format json
+
+python3 scripts/eastern_divination.py \
+  --question "未来一个月项目推进需要先验证什么？" \
+  --numbers 2 3 \
+  --first-cast \
+  --format json
 ```
 
 Node 入口返回完整命盘、全部大限和目标日期的流年、流月、流日、流时；Python 入口返回适合 Agent
@@ -282,6 +318,9 @@ Node 入口返回完整命盘、全部大限和目标日期的流年、流月、
 `mode: "compatibility"`；每条 `finding` 都包含 `fact`、`traditionalInterpretation`、`practicalNote`
 和 `evidence`，便于调用方区分证据层级。
 
+东方占卜入口输出 `mode: "eastern-divination"`，包含起卦中间值、本卦、互卦、变卦、动爻、体用、资料来源、
+反证问题与现实行动建议。调用方不应把其中的传统解释字段提升为事实或预测结论。
+
 ## 测试
 
 ```bash
@@ -289,7 +328,7 @@ npm test
 ```
 
 测试覆盖黄金用例、公历与农历等价、早晚子时、目标日期全部运限、13 时辰比较、六大主题事实包、
-事业/财帛/姻缘规则解盘及双方合盘，以及：
+事业/财帛/姻缘规则解盘、双方合盘、梅花易数六十四卦表、数字/时间起卦和高风险拦截，以及：
 
 - 通行版与中州派；
 - 天盘、地盘和人盘；
@@ -316,9 +355,13 @@ npm test
 ├── agents/openai.yaml           # Skill 展示信息
 ├── references/
 │   ├── calculation.md           # 排盘口径、算法和黄金用例
+│   ├── divination.md            # 梅花易数来源、计算口径与安全边界
 │   ├── interpretation.md        # 解读框架与专题规则
 │   └── supplementary.md         # 补充体系、隐私与安全边界
 ├── scripts/
+│   ├── eastern_divination.py    # 东方占卜统一入口（首个方法：梅花易数）
+│   ├── meihua_calendar.mjs      # 时间起卦的农历转换适配器
+│   ├── meihua_rules.py          # 八卦、六十四卦与解释规则表
 │   ├── ziwei_pan.mjs            # 确定性排盘命令行工具
 │   ├── ziwei_time_compare.mjs   # 13 时辰候选比较
 │   ├── ziwei_auto.py            # 六主题自动事实包
@@ -327,7 +370,8 @@ npm test
 │   ├── test_ziwei_pan.mjs       # Node 回归测试
 │   ├── test_skill_metadata.mjs  # Codex/Claude Code 兼容性测试
 │   ├── test_ziwei_auto.py       # Python 自动化测试
-│   └── test_ziwei_interpret.py  # 规则解盘与合盘测试
+│   ├── test_ziwei_interpret.py  # 规则解盘与合盘测试
+│   └── test_eastern_divination.py # 梅花易数与安全边界测试
 └── package.json
 ```
 
@@ -337,5 +381,5 @@ npm test
 
 ## 最后提醒
 
-命盘无法替你认识一个人，也无法替你承担选择的后果。面对感情、工作、金钱和健康问题时，请优先使用可验证的信息，
+命盘或卦象无法替你认识一个人，也无法替你承担选择的后果。面对感情、工作、金钱和健康问题时，请优先使用可验证的信息，
 咨询真正具备资质的专业人士，并保留改变计划和人生方向的主动权。
