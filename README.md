@@ -18,6 +18,7 @@
 - 输出十二宫、主辅杂曜、生年四化、大限与指定日期流年。
 - 支持 Markdown 和 JSON，方便人工阅读或程序继续处理。
 - Python 自动生成事业、财运、身心、感情、整体和学业六类事实包。
+- 提供确定性规则解盘 CLI，支持事业、财帛、姻缘及双方姻缘合盘。
 - 出生时间未知时，可比较早子至晚子共 13 个候选时辰。
 - 同一份 `SKILL.md` 可供 Codex 和 Claude Code 使用，无需维护两套提示词。
 - 提供黄金用例和自动化测试，便于检查升级后的排盘一致性。
@@ -119,6 +120,49 @@ python3 scripts/ziwei_auto.py \
   --solar 2000-08-16 \
   --sex 女
 ```
+
+### 事业、财帛和姻缘解盘
+
+`ziwei_interpret.py` 是不调用外部模型的规则解盘程序。它复用同一排盘引擎，并将脚本事实、传统解释、
+现实建议和证据分开输出：
+
+```bash
+python3 scripts/ziwei_interpret.py \
+  --topic 事业 \
+  --solar 2000-08-16 \
+  --hour 03:30 \
+  --sex 女 \
+  --target-date 2026-08-28
+```
+
+`--topic` 支持：
+
+- `事业` / `career`
+- `财帛`、`财运` / `wealth`
+- `姻缘`、`感情` / `relationship`
+- `合盘` / `compatibility`
+
+如需机器可读结果，添加 `--format json`；如需保存，添加 `--output result.md`。
+
+### 姻缘合盘
+
+合盘需要两人的完整出生时间和性别。第二人的参数统一使用 `--partner-*` 前缀；由于涉及第三方资料，
+还必须用 `--partner-consent` 确认已经获得对方许可：
+
+```bash
+python3 scripts/ziwei_interpret.py \
+  --topic 合盘 \
+  --solar 2000-08-16 --hour 03:30 --sex 女 --label 甲方 \
+  --partner-solar 1998-12-20 \
+  --partner-hour 14:20 \
+  --partner-sex 男 \
+  --partner-label 乙方 \
+  --partner-consent \
+  --target-date 2026-08-28
+```
+
+程序比较双方单盘关系结构、需求与表达方式、生年四化跨盘映射和宫位地支辅助信号，不生成匹配分数，
+也不判断“唯一正缘”或保证婚期。
 
 ## Codex 与 Claude Code
 
@@ -234,13 +278,18 @@ Node 入口返回完整命盘、全部大限和目标日期的流年、流月、
 继续处理的精简事实包。两者当前都输出 `schemaVersion: "1.0"`。新增字段按向后兼容方式加入，调用方仍应保留
 未知字段并检查 `schemaVersion`。
 
+规则解盘入口同样输出 `schemaVersion: "1.0"`。单盘结果使用 `mode: "interpretation"`，合盘使用
+`mode: "compatibility"`；每条 `finding` 都包含 `fact`、`traditionalInterpretation`、`practicalNote`
+和 `evidence`，便于调用方区分证据层级。
+
 ## 测试
 
 ```bash
 npm test
 ```
 
-测试覆盖黄金用例、公历与农历等价、早晚子时、目标日期全部运限、13 时辰比较、六大主题事实包，以及：
+测试覆盖黄金用例、公历与农历等价、早晚子时、目标日期全部运限、13 时辰比较、六大主题事实包、
+事业/财帛/姻缘规则解盘及双方合盘，以及：
 
 - 通行版与中州派；
 - 天盘、地盘和人盘；
@@ -273,9 +322,12 @@ npm test
 │   ├── ziwei_pan.mjs            # 确定性排盘命令行工具
 │   ├── ziwei_time_compare.mjs   # 13 时辰候选比较
 │   ├── ziwei_auto.py            # 六主题自动事实包
+│   ├── ziwei_interpret.py       # 事业、财帛、姻缘与合盘规则解读
+│   ├── ziwei_rules.py           # 可审查的星曜词义与解盘规则表
 │   ├── test_ziwei_pan.mjs       # Node 回归测试
 │   ├── test_skill_metadata.mjs  # Codex/Claude Code 兼容性测试
-│   └── test_ziwei_auto.py       # Python 自动化测试
+│   ├── test_ziwei_auto.py       # Python 自动化测试
+│   └── test_ziwei_interpret.py  # 规则解盘与合盘测试
 └── package.json
 ```
 

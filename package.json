@@ -5,9 +5,10 @@
   "type": "module",
   "description": "Deterministic Zi Wei Dou Shu charting and interpretation skill.",
   "scripts": {
-    "test": "node --test scripts/test_ziwei_pan.mjs scripts/test_skill_metadata.mjs && python3 -m unittest scripts/test_ziwei_auto.py",
+    "test": "node --test scripts/test_ziwei_pan.mjs scripts/test_skill_metadata.mjs && python3 -m unittest scripts/test_ziwei_auto.py scripts/test_ziwei_interpret.py",
     "compare-times": "node scripts/ziwei_time_compare.mjs",
-    "auto": "python3 scripts/ziwei_auto.py"
+    "auto": "python3 scripts/ziwei_auto.py",
+    "interpret": "python3 scripts/ziwei_interpret.py"
   },
   "dependencies": {
     "iztro": "2.6.0"

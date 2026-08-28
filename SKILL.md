@@ -69,6 +69,36 @@ python3 scripts/ziwei_auto.py --solar 2000-08-16 --shichen 寅 --sex 女 --forma
 
 省略 `--hour` 和 `--shichen` 时，Python 入口自动切换到 13 时辰候选比较。需要保存结果时添加 `--output result.md`。Python 只负责编排和提取事实，不重新实现或近似计算星曜。
 
+## 确定性专题解盘
+
+用户询问事业、财帛或姻缘时，优先运行规则解盘入口。它先调用锁定的排盘引擎，再按固定、可审查的
+星曜词义与宫位矩阵输出“脚本事实／传统解释／现实建议／证据”；可输出 Markdown 或 JSON：
+
+```bash
+python3 scripts/ziwei_interpret.py --topic 事业 --solar 2000-08-16 --hour 03:30 --sex 女 --target-date 2026-08-28
+python3 scripts/ziwei_interpret.py --topic 财帛 --solar 2000-08-16 --hour 03:30 --sex 女 --format json
+python3 scripts/ziwei_interpret.py --topic 姻缘 --solar 2000-08-16 --hour 03:30 --sex 女
+```
+
+`--topic` 同时接受 `career`、`wealth`、`relationship` 及其中文别名。脚本要求确定的出生时间；时辰未知时，
+先走 13 时辰校时流程，不得对未确定的候选盘直接解读。
+
+姻缘合盘使用同一入口和第二组 `--partner-*` 参数。运行前确认对方已经许可使用其出生资料，并显式传入
+`--partner-consent`：
+
+```bash
+python3 scripts/ziwei_interpret.py \
+  --topic 合盘 \
+  --solar 2000-08-16 --hour 03:30 --sex 女 --label 甲方 \
+  --partner-solar 1998-12-20 --partner-hour 14:20 --partner-sex 男 --partner-label 乙方 \
+  --partner-consent --target-date 2026-08-28
+```
+
+合盘依次比较双方夫妻宫、命宫与身宫的需求/表达、双方生年四化跨盘映射及低权重宫支合冲。不得把结果
+改写成匹配分数、唯一正缘或必然婚期；双方真实意愿和现实相处证据始终优先。
+
+## 底层排盘与校时
+
 需要查看完整原始命盘或调试底层排盘时，直接运行 Node 入口。
 
 优先使用公历与具体时间：
