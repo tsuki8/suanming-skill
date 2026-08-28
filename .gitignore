@@ -1,0 +1,8 @@
+node_modules/
+.DS_Store
+npm-debug.log*
+__pycache__/
+*.py[cod]
+.~*.docx
+~$*.docx
+review.docx
