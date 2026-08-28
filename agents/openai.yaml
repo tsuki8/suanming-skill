@@ -1,0 +1,4 @@
+interface:
+  display_name: "紫微斗数排盘与解读"
+  short_description: "专注紫微斗数排盘、四化、大限流年与专题解读的确定性技能"
+  default_prompt: "使用 $ziwei-skill 按明确流派口径为我排紫微斗数命盘并解读。"
