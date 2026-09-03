@@ -197,7 +197,7 @@ Python 事实包中的顶层 `bodyPalace` 是身宫所在宫位的完整事实�
 python3 scripts/eastern_divination.py \
   --method meihua \
   --question "未来一个月这个项目应优先验证什么？" \
-  --numbers 2 3 --moving 1 --first-cast
+  --numbers 202 203 301 --first-cast
 
 python3 scripts/eastern_divination.py \
   --method meihua \
@@ -205,8 +205,9 @@ python3 scripts/eastern_divination.py \
   --datetime 2026-08-28T15:30+08:00 --first-cast --format json
 ```
 
-只使用用户明确提供的首次数字或起卦时间，不读取系统当前时间、不替用户随机选数。数字输入的第一数为上卦、
-第二数为下卦；默认两数之和取动爻。时间起卦采用农历年支、月、日和十二时辰，完整口径见
+只使用用户明确提供的首次数字或起卦时间，不读取系统当前时间、不替用户随机选数。数字起卦必须由用户一次
+提供三个 100–999 的三位整数：第一数取上卦，第二数取下卦，第三数取动爻。不要补数、拆数或改用两数之和。
+时间起卦采用农历年支、月、日和十二时辰，完整口径见
 `references/divination.md`。输出中的卦象结构是脚本事实，卦义、体用和行动提示是传统解释与本项目现代释义，
 必须保留资料来源、反证问题和免责声明。
 

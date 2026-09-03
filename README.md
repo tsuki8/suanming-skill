@@ -168,14 +168,15 @@ python3 scripts/ziwei_interpret.py \
 ### 东方占卜：梅花易数
 
 `eastern_divination.py` 用固定规则生成本卦、互卦、变卦、动爻和体用关系。它不读取当前时间、不随机抽取，
-相同输入始终得到相同结果。数字起卦时，第一数为上卦、第二数为下卦；省略 `--moving` 时用两数之和取动爻：
+相同输入始终得到相同结果。数字起卦必须提供三个 100–999 的三位整数，依次用于上卦、下卦与动爻：
+第一数除以 8 取余定上卦，第二数除以 8 取余定下卦，第三数除以 6 取余定动爻；整除时分别按 8、8、6 计。
+少于或多于三个数、包含非三位整数，或继续使用旧的 `--moving` 参数，都会被程序拒绝。
 
 ```bash
 python3 scripts/eastern_divination.py \
   --method meihua \
   --question "未来一个月这个项目应优先验证什么？" \
-  --numbers 2 3 \
-  --moving 1 \
+  --numbers 202 203 301 \
   --first-cast
 ```
 
@@ -305,7 +306,7 @@ python3 scripts/ziwei_auto.py \
 
 python3 scripts/eastern_divination.py \
   --question "未来一个月项目推进需要先验证什么？" \
-  --numbers 2 3 \
+  --numbers 202 203 301 \
   --first-cast \
   --format json
 ```

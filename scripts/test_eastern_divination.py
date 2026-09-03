@@ -35,17 +35,16 @@ class EasternDivinationTests(unittest.TestCase):
             for lower_name in (row["name"] for row in TRIGRAMS.values()):
                 self.assertIn((upper_name, lower_name), HEXAGRAM_BY_TRIGRAMS)
 
-    def test_classical_number_example(self) -> None:
+    def test_three_number_casting_example(self) -> None:
         result = run_cli(
             "--method",
             "meihua",
             "--question",
             "未来一个月这个项目应优先验证什么？",
             "--numbers",
-            "2",
-            "3",
-            "--moving",
-            "1",
+            "202",
+            "203",
+            "301",
             "--first-cast",
             "--format",
             "json",
@@ -61,13 +60,14 @@ class EasternDivinationTests(unittest.TestCase):
         self.assertEqual(payload["bodyUse"]["initialRelation"]["code"], "用克体")
         self.assertEqual(payload["bodyUse"]["changedRelation"]["code"], "用生体")
 
-    def test_number_cast_defaults_moving_total_to_sum(self) -> None:
+    def test_third_number_sets_moving_line(self) -> None:
         result = run_cli(
             "--question",
             "下一步先验证哪个现实条件？",
             "--numbers",
-            "1",
-            "5",
+            "201",
+            "205",
+            "306",
             "--first-cast",
             "--format",
             "json",
@@ -75,8 +75,54 @@ class EasternDivinationTests(unittest.TestCase):
 
         self.assertEqual(result.returncode, 0, result.stderr)
         payload = json.loads(result.stdout)
-        self.assertEqual(payload["casting"]["movingTotal"], 6)
+        self.assertEqual(payload["casting"]["input"]["upperNumber"], 201)
+        self.assertEqual(payload["casting"]["input"]["lowerNumber"], 205)
+        self.assertEqual(payload["casting"]["input"]["movingNumber"], 306)
+        self.assertEqual(payload["casting"]["movingTotal"], 306)
         self.assertEqual(payload["movingLine"]["number"], 6)
+
+    def test_each_number_must_have_three_digits(self) -> None:
+        result = run_cli(
+            "--question",
+            "下一步先验证哪个现实条件？",
+            "--numbers",
+            "99",
+            "205",
+            "306",
+            "--first-cast",
+        )
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("三个数都必须是 100 到 999 的三位整数", result.stderr)
+
+    def test_number_cast_requires_exactly_three_numbers(self) -> None:
+        result = run_cli(
+            "--question",
+            "下一步先验证哪个现实条件？",
+            "--numbers",
+            "202",
+            "203",
+            "--first-cast",
+        )
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("argument --numbers", result.stderr)
+
+    def test_legacy_moving_option_is_rejected(self) -> None:
+        result = run_cli(
+            "--question",
+            "下一步先验证哪个现实条件？",
+            "--numbers",
+            "202",
+            "203",
+            "301",
+            "--moving",
+            "401",
+            "--first-cast",
+        )
+
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("unrecognized arguments: --moving 401", result.stderr)
 
     def test_explicit_datetime_uses_lunar_calendar_and_shichen(self) -> None:
         result = run_cli(
@@ -136,8 +182,9 @@ class EasternDivinationTests(unittest.TestCase):
             "--question",
             "下一步先验证哪个现实条件？",
             "--numbers",
-            "2",
-            "3",
+            "202",
+            "203",
+            "301",
         )
 
         self.assertEqual(result.returncode, 2)
@@ -148,8 +195,9 @@ class EasternDivinationTests(unittest.TestCase):
             "--question",
             "我应该买哪只股票投资？",
             "--numbers",
-            "2",
-            "3",
+            "202",
+            "203",
+            "301",
             "--first-cast",
         )
 
@@ -161,8 +209,9 @@ class EasternDivinationTests(unittest.TestCase):
             "--question",
             "这个方案是否可行？另一个方案呢？",
             "--numbers",
-            "2",
-            "3",
+            "202",
+            "203",
+            "301",
             "--first-cast",
         )
 
@@ -176,8 +225,9 @@ class EasternDivinationTests(unittest.TestCase):
                 "--question",
                 "我该怎样缩小钥匙的遗失范围？",
                 "--numbers",
-                "4",
-                "7",
+                "204",
+                "207",
+                "305",
                 "--first-cast",
                 "--output",
                 str(output),

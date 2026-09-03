@@ -58,7 +58,7 @@ def build_parser() -> argparse.ArgumentParser:
         description="确定性生成梅花易数本卦、互卦、变卦和反思性解读。",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
-            "数字起卦：--numbers 的第一数为上卦、第二数为下卦；默认两数之和取动爻。\n"
+            "数字起卦：--numbers 必须提供三个三位数，依次取上卦、下卦和动爻。\n"
             "时间起卦：--datetime 使用明确的当地民用时间，不读取系统当前时间。"
         ),
     )
@@ -67,10 +67,10 @@ def build_parser() -> argparse.ArgumentParser:
     source_group = parser.add_mutually_exclusive_group(required=True)
     source_group.add_argument(
         "--numbers",
-        nargs=2,
+        nargs=3,
         type=int,
-        metavar=("UPPER", "LOWER"),
-        help="第一数取上卦，第二数取下卦",
+        metavar=("UPPER", "LOWER", "MOVING"),
+        help="三个 100–999 的整数，依次取上卦、下卦和动爻",
     )
     source_group.add_argument(
         "--datetime",
@@ -78,7 +78,6 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="YYYY-MM-DDTHH:MM",
         help="用当地民用时间按传统年月日时法起卦",
     )
-    parser.add_argument("--moving", type=int, help="数字起卦时显式指定动爻数；仍按六取余")
     parser.add_argument(
         "--first-cast",
         action="store_true",
@@ -110,13 +109,8 @@ def validate_question(parser: argparse.ArgumentParser, args: argparse.Namespace)
                 f"该问题涉及{category}（命中：{'、'.join(matched)}），不能使用占卜程序决定；"
                 "请改用现实证据和合格专业意见"
             )
-    if args.numbers and any(value <= 0 for value in args.numbers):
-        parser.error("--numbers 必须是正整数")
-    if args.moving is not None:
-        if args.casting_datetime:
-            parser.error("--moving 只用于 --numbers；时间起卦的动爻由公式生成")
-        if args.moving <= 0:
-            parser.error("--moving 必须是正整数")
+    if args.numbers and any(value < 100 or value > 999 for value in args.numbers):
+        parser.error("--numbers 的三个数都必须是 100 到 999 的三位整数")
     return question
 
 
@@ -163,8 +157,7 @@ def shichen_for_hour(hour: int) -> tuple[str, int]:
 
 
 def number_casting(args: argparse.Namespace) -> tuple[dict[str, Any], list[str]]:
-    upper_raw, lower_raw = args.numbers
-    moving_raw = args.moving if args.moving is not None else upper_raw + lower_raw
+    upper_raw, lower_raw, moving_raw = args.numbers
     return (
         {
             "source": "numbers",

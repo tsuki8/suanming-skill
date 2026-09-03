@@ -1,4 +1,4 @@
 interface:
   display_name: "紫微斗数排盘、解盘与东方占卜"
   short_description: "本地确定性紫微排盘、专题解盘、姻缘合盘、13时辰校时与梅花易数"
-  default_prompt: "使用 $ziwei-skill 完成确定性紫微排盘解读，或按首次数字/时间生成梅花易数反思结果。"
+  default_prompt: "使用 $ziwei-skill 完成确定性紫微排盘解读，或按首次提供的三个三位数/时间生成梅花易数反思结果。"
